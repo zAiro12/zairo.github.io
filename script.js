@@ -1,128 +1,143 @@
 // =============================
 // Mobile Navigation Toggle
 // =============================
-const navToggle = document.getElementById('navToggle');
-const navLinks = document.getElementById('navLinks');
+const navToggle = document.getElementById("navToggle");
+const navLinks = document.getElementById("navLinks");
 
-navToggle.addEventListener('click', () => {
-  navLinks.classList.toggle('open');
-  const isOpen = navLinks.classList.contains('open');
-  navToggle.setAttribute('aria-expanded', isOpen);
+navToggle.addEventListener("click", () => {
+  navLinks.classList.toggle("open");
+  const isOpen = navLinks.classList.contains("open");
+  navToggle.setAttribute("aria-expanded", isOpen);
 });
 
 // Close menu when a link is clicked
-navLinks.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', () => {
-    navLinks.classList.remove('open');
-    navToggle.setAttribute('aria-expanded', false);
+navLinks.querySelectorAll("a").forEach((link) => {
+  link.addEventListener("click", () => {
+    navLinks.classList.remove("open");
+    navToggle.setAttribute("aria-expanded", false);
   });
 });
 
 // Also close menu on hashchange (e.g., when clicking logo to navigate to #hero)
-window.addEventListener('hashchange', () => {
-  navLinks.classList.remove('open');
-  navToggle.setAttribute('aria-expanded', false);
+window.addEventListener("hashchange", () => {
+  navLinks.classList.remove("open");
+  navToggle.setAttribute("aria-expanded", false);
 });
 // =============================
 // Active nav link on scroll
 // =============================
-const sections = document.querySelectorAll('section[id]');
-const navLinkElements = document.querySelectorAll('.nav-links a');
+const sections = document.querySelectorAll("section[id]");
+const navLinkElements = document.querySelectorAll(".nav-links a");
 let currentActiveLink = null;
 
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return;
+const observer = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
 
-    const id = entry.target.getAttribute('id');
-    const link = Array.from(navLinkElements).find(
-      (a) => a.getAttribute('href') === `#${id}`
-    );
+      const id = entry.target.getAttribute("id");
+      const link = Array.from(navLinkElements).find(
+        (a) => a.getAttribute("href") === `#${id}`,
+      );
 
-    if (!link || link === currentActiveLink) return;
+      if (!link || link === currentActiveLink) return;
 
-    if (currentActiveLink) {
-      currentActiveLink.classList.remove('active');
-      currentActiveLink.removeAttribute('aria-current');
-    }
+      if (currentActiveLink) {
+        currentActiveLink.classList.remove("active");
+        currentActiveLink.removeAttribute("aria-current");
+      }
 
-    link.classList.add('active');
-    link.setAttribute('aria-current', 'page');
-    currentActiveLink = link;
-  });
-}, { threshold: 0.4 });
+      link.classList.add("active");
+      link.setAttribute("aria-current", "page");
+      currentActiveLink = link;
+    });
+  },
+  { threshold: 0.4 },
+);
 
-sections.forEach(s => observer.observe(s));
+sections.forEach((s) => observer.observe(s));
 
 // =============================
 // Fetch GitHub projects
 // =============================
-const GITHUB_USER = 'zAiro12';
-const EXCLUDED_REPOS = ['zairo.github.io', 'zAiro12'];
+const GITHUB_USER = "zAiro12";
+const EXCLUDED_REPOS = ["zairo.github.io", "zAiro12"];
 
 const LANG_COLORS = {
-  Go: '#00ADD8',
-  HTML: '#E34F26',
-  Vue: '#41B883',
-  JavaScript: '#F7DF1E',
-  TypeScript: '#3178C6',
-  Java: '#ED8B00',
-  Python: '#3776AB',
-  'C++': '#F34B7D',
-  'C#': '#239120',
+  Go: "#00ADD8",
+  HTML: "#E34F26",
+  Vue: "#41B883",
+  JavaScript: "#F7DF1E",
+  TypeScript: "#3178C6",
+  Java: "#ED8B00",
+  Python: "#3776AB",
+  "C++": "#F34B7D",
+  "C#": "#239120",
 };
 
 function getLangDot(lang) {
-  const color = LANG_COLORS[lang] || '#6e7681';
+  const color = LANG_COLORS[lang] || "#6e7681";
   return `<span class="lang-dot" style="background:${color}"></span>`;
 }
 
 function escapeHtml(str) {
-  if (!str) return '';
+  if (!str) return "";
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-function renderProjects(repos) {
-  const grid = document.getElementById('projectsGrid');
+function getRepoScore(repo) {
+  return (repo.stargazers_count || 0) + (repo.forks_count || 0);
+}
+
+function getRepoActivityTime(repo) {
+  const timestamp = repo.pushed_at || repo.updated_at || repo.created_at;
+  return timestamp ? new Date(timestamp).getTime() : 0;
+}
+
+function renderProjectGrid(gridId, repos, emptyMessage) {
+  const grid = document.getElementById(gridId);
   if (!grid) return;
 
   if (!repos || repos.length === 0) {
-    grid.innerHTML = '<p style="color:var(--text-muted)">Impossibile caricare i progetti. <a href="https://github.com/zAiro12" target="_blank" rel="noopener noreferrer">Visita il profilo GitHub</a>.</p>';
+    grid.innerHTML = `<p style="color:var(--text-muted)">${emptyMessage}</p>`;
     return;
   }
 
   function getSafeRepoUrl(repo) {
     const rawUrl = repo && repo.html_url;
     if (!rawUrl) {
-      return '#';
+      return "#";
     }
 
     try {
       const parsed = new URL(rawUrl);
-      if (parsed.protocol === 'https:' && parsed.hostname === 'github.com') {
+      if (parsed.protocol === "https:" && parsed.hostname === "github.com") {
         return escapeHtml(parsed.toString());
       }
     } catch (e) {
       // Ignore invalid URLs and fall back to a safe default below.
     }
 
-    return '#';
+    return "#";
   }
 
-  grid.innerHTML = repos.map(repo => {
-    const lang = escapeHtml(repo.language || '');
-    const desc = escapeHtml(repo.description || 'Nessuna descrizione disponibile.');
-    const name = escapeHtml(repo.name || '');
-    const stars = repo.stargazers_count || 0;
-    const forks = repo.forks_count || 0;
-    const url = getSafeRepoUrl(repo);
+  grid.innerHTML = repos
+    .map((repo) => {
+      const lang = escapeHtml(repo.language || "");
+      const desc = escapeHtml(
+        repo.description || "Nessuna descrizione disponibile.",
+      );
+      const name = escapeHtml(repo.name || "");
+      const stars = repo.stargazers_count || 0;
+      const forks = repo.forks_count || 0;
+      const url = getSafeRepoUrl(repo);
 
-    return `
+      return `
       <a class="project-card" href="${url}" target="_blank" rel="noopener noreferrer">
         <div class="project-header">
           <span class="project-name">${name}</span>
@@ -138,17 +153,42 @@ function renderProjects(repos) {
         </div>
         <p class="project-desc">${desc}</p>
         <div class="project-footer">
-          ${lang ? `<span class="project-lang">${getLangDot(lang)}<span>${lang}</span></span>` : ''}
-          ${stars > 0 ? `<span>⭐ ${stars}</span>` : ''}
-          ${forks > 0 ? `<span>🍴 ${forks}</span>` : ''}
+          ${lang ? `<span class="project-lang">${getLangDot(lang)}<span>${lang}</span></span>` : ""}
+          ${stars > 0 ? `<span>⭐ ${stars}</span>` : ""}
+          ${forks > 0 ? `<span>🍴 ${forks}</span>` : ""}
         </div>
       </a>
     `;
-  }).join('');
+    })
+    .join("");
+}
+
+function renderProjectSections(repos) {
+  const sourceRepos = Array.isArray(repos) ? repos : [];
+
+  const relevantRepos = [...sourceRepos]
+    .sort((a, b) => getRepoScore(b) - getRepoScore(a))
+    .slice(0, 9);
+
+  const recentRepos = [...sourceRepos]
+    .sort((a, b) => getRepoActivityTime(b) - getRepoActivityTime(a))
+    .slice(0, 6);
+
+  renderProjectGrid(
+    "projectsGrid",
+    relevantRepos,
+    'Impossibile caricare i progetti. <a href="https://github.com/zAiro12" target="_blank" rel="noopener noreferrer">Visita il profilo GitHub</a>.',
+  );
+
+  renderProjectGrid(
+    "recentProjectsGrid",
+    recentRepos,
+    'Impossibile caricare i progetti recenti. <a href="https://github.com/zAiro12" target="_blank" rel="noopener noreferrer">Visita il profilo GitHub</a>.',
+  );
 }
 
 async function loadProjects() {
-  const CACHE_KEY = 'gh_repos_cache';
+  const CACHE_KEY = "gh_repos_cache_v2";
   const CACHE_TTL = 60 * 60 * 1000; // 1 hour in ms
 
   try {
@@ -165,23 +205,27 @@ async function loadProjects() {
   }
 
   try {
-    const res = await fetch(`https://api.github.com/users/${GITHUB_USER}/repos?sort=updated&per_page=100`);
+    const res = await fetch(
+      `https://api.github.com/users/${GITHUB_USER}/repos?sort=updated&per_page=100`,
+    );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const raw = await res.json();
     const filtered = raw
-      .filter(r => !r.fork && !EXCLUDED_REPOS.includes(r.name))
-      .sort((a, b) => (b.stargazers_count + b.forks_count) - (a.stargazers_count + a.forks_count))
-      .slice(0, 9);
+      .filter((r) => !r.fork && !EXCLUDED_REPOS.includes(r.name))
+      .sort((a, b) => getRepoActivityTime(b) - getRepoActivityTime(a));
 
     try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: filtered }));
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({ ts: Date.now(), data: filtered }),
+      );
     } catch {
       // Ignore if localStorage is unavailable or full
     }
 
-    renderProjects(filtered);
+    renderProjectSections(filtered);
   } catch {
-    renderProjects(null);
+    renderProjectSections(null);
   }
 }
 
